@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "project": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "88718000000013063",
+      "name": "HackSphere-3",
+      "domain": {
+        "id": "50047137836",
+        "name": "hacksphere-3-60093044321.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60093044321",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}

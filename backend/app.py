@@ -35,7 +35,7 @@ def index():
 def health_check():
     """Returns system status, active configuration and model provider details."""
     is_prod_ready = quickml_client.is_configured()
-    allow_dev_baseline = quickml_client.allow_dev_baseline
+    allow_dev_baseline = quickml_client.allows_baseline
     return jsonify({
         "status": "healthy",
         "service": "HackSphere 3.0 Energy Engine",
@@ -159,5 +159,6 @@ def forecast_manual():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT", os.environ.get("PORT", 8000)))
+    app.run(host="0.0.0.0", port=port, debug=False)
+

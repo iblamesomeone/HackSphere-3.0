@@ -1,12 +1,20 @@
 """
-HackSphere 3.0: QuickML Client Adapter
+HackSphere 3.0: Production QuickML Client Adapter
 
-Handles HTTP communication with the published Zoho Catalyst QuickML endpoint.
-Reads configuration strictly from environment variables.
-Provides explicit failure reporting with no silent fallback in production.
+Connects directly to the published Zoho Catalyst QuickML REST API:
+POST https://api.catalyst.zoho.in/quickml/v1/project/{project_id}/endpoints/predict
+
+Headers:
+- X-QUICKML-ENDPOINT-KEY: Deployed endpoint access key
+- Authorization: Zoho-oauthtoken {OAuth Access Token} (with automatic CLI refresh)
+- CATALYST-ORG: Catalyst organization / ZGID
+- Environment: Development / Production
+
+Strict Production Safeguard: Never silently falls back to dummy baselines.
 """
 
 import os
+import subprocess
 import requests
 import numpy as np
 import pandas as pd
@@ -24,11 +32,25 @@ class QuickMLError(Exception):
 
 class QuickMLClient:
     def __init__(self):
-        self.endpoint_url = os.environ.get("QUICKML_ENDPOINT_URL", "").strip()
+        # Load local .env if present
+        env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
+        if os.path.exists(env_file):
+            with open(env_file, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        if k.strip() not in os.environ:
+                            os.environ[k.strip()] = v.strip()
+
+        self.project_id = os.environ.get("QUICKML_PROJECT_ID", "88718000000013063").strip()
+        default_url = f"https://api.catalyst.zoho.in/quickml/v1/project/{self.project_id}/endpoints/predict"
+        self.endpoint_url = os.environ.get("QUICKML_ENDPOINT_URL", default_url).strip()
+        self.endpoint_key = os.environ.get("QUICKML_ENDPOINT_KEY", "").strip()
+        self.org_id = os.environ.get("QUICKML_ORG_ID", "60093044321").strip()
+        self.environment = os.environ.get("QUICKML_ENVIRONMENT", "Development").strip()
         self.auth_token = os.environ.get("QUICKML_AUTH_TOKEN", "").strip()
-        self.timeout_seconds = float(os.environ.get("QUICKML_TIMEOUT_SECONDS", "10"))
-        # Allow local baseline only if explicitly permitted (defaults to False in strict production)
-        self.allow_dev_baseline = os.environ.get("ALLOW_DEV_LOCAL_BASELINE", "0").lower() in ("1", "true", "yes")
+        self.timeout_seconds = float(os.environ.get("QUICKML_TIMEOUT_SECONDS", "30"))
 
     def is_configured(self) -> bool:
         endpoint = os.environ.get("QUICKML_ENDPOINT_URL", self.endpoint_url).strip()
@@ -38,80 +60,116 @@ class QuickMLClient:
     def allows_baseline(self) -> bool:
         return os.environ.get("ALLOW_DEV_LOCAL_BASELINE", "0").lower() in ("1", "true", "yes")
 
+    def _get_active_oauth_token(self) -> str:
+        """Retrieves active OAuth access token from environment, or auto-refreshes via Catalyst CLI."""
+        token = os.environ.get("QUICKML_AUTH_TOKEN", self.auth_token).strip()
+        if token:
+            return token
+
+        # Auto-refresh using catalyst cli credential store if available
+        script_path = os.path.join(os.path.dirname(__file__), "get_catalyst_token.js")
+        if os.path.exists(script_path):
+            try:
+                proc = subprocess.run(
+                    ["node", script_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if proc.returncode == 0 and proc.stdout.strip():
+                    return proc.stdout.strip()
+            except Exception:
+                pass
+
+        return ""
+
     def predict(self, input_df: pd.DataFrame) -> Tuple[List[float], str]:
         """
-        Generates predictions for each row in input_df.
+        Generates predictions for each row in input_df using the real Zoho Catalyst QuickML REST endpoint.
 
         Returns:
             Tuple[List[float], str]: (predictions, source_model_type)
-            source_model_type is either:
-                - "Zoho Catalyst QuickML (Published Endpoint)"
-                - "Local Baseline (Dev / Offline Fallback - NOT Published QuickML)"
-
-        Raises:
-            QuickMLError: If the real endpoint is unconfigured or fails (and dev baseline is disabled).
         """
-        if self.is_configured():
-            headers = {"Content-Type": "application/json"}
-            if self.auth_token:
-                headers["Authorization"] = f"Bearer {self.auth_token}"
+        endpoint = os.environ.get("QUICKML_ENDPOINT_URL", self.endpoint_url).strip()
 
-            payload = {"data": input_df.to_dict(orient="records")}
+        if endpoint and endpoint != "YOUR_PUBLISHED_QUICKML_ENDPOINT_URL_HERE":
+            oauth_token = self._get_active_oauth_token()
+
+            headers = {
+                "Content-Type": "application/json",
+                "Environment": self.environment
+            }
+            if self.endpoint_key:
+                headers["X-QUICKML-ENDPOINT-KEY"] = self.endpoint_key
+            if self.org_id:
+                headers["CATALYST-ORG"] = self.org_id
+                headers["catalyst-org"] = self.org_id
+            if self.project_id:
+                headers["x-ziahub-catalyst-project-id"] = self.project_id
+            if oauth_token:
+                headers["Authorization"] = f"Zoho-oauthtoken {oauth_token}"
+
+            records = input_df[["timestamp", "ambient_temp_c", "humidity_pct", "solar_irradiance_wm2"]].to_dict(orient="records")
 
             try:
-                response = requests.post(
-                    self.endpoint_url,
-                    json=payload,
-                    headers=headers,
-                    timeout=self.timeout_seconds
-                )
-                if response.status_code != 200:
-                    raise QuickMLError(
-                        f"QuickML endpoint returned HTTP {response.status_code}: {response.text[:200]}",
-                        status_code=502,
-                        details={"endpoint": self.endpoint_url, "http_status": response.status_code}
+                batch_size = 200
+                all_preds = []
+
+                for i in range(0, len(records), batch_size):
+                    batch = records[i:i + batch_size]
+                    payload = {"data": batch}
+
+                    response = requests.post(
+                        endpoint,
+                        json=payload,
+                        headers=headers,
+                        timeout=self.timeout_seconds
                     )
-                
-                result = response.json()
-                if "predictions" not in result:
+
+                    if response.status_code != 200:
+                        raise QuickMLError(
+                            f"QuickML endpoint returned HTTP {response.status_code}: {response.text[:250]}",
+                            status_code=502,
+                            details={"endpoint": endpoint, "http_status": response.status_code}
+                        )
+
+                    result = response.json()
+                    if "result" in result:
+                        all_preds.extend([float(p) for p in result["result"]])
+                    elif "predictions" in result:
+                        all_preds.extend([float(p) for p in result["predictions"]])
+                    else:
+                        raise QuickMLError(
+                            f"QuickML response missing prediction array: {list(result.keys())}",
+                            status_code=502,
+                            details=result
+                        )
+
+                if len(all_preds) != len(input_df):
                     raise QuickMLError(
-                        "QuickML response missing 'predictions' key.",
-                        status_code=502,
-                        details=result
-                    )
-                
-                preds = [float(p) for p in result["predictions"]]
-                if len(preds) != len(input_df):
-                    raise QuickMLError(
-                        f"QuickML prediction length mismatch: expected {len(input_df)}, got {len(preds)}",
+                        f"QuickML prediction length mismatch: expected {len(input_df)}, got {len(all_preds)}",
                         status_code=502
                     )
 
-                return preds, "Zoho Catalyst QuickML (Published Endpoint)"
+                return all_preds, "Zoho Catalyst QuickML (Energy_Demand_Regression_Model)"
 
             except requests.exceptions.RequestException as e:
-                err_msg = f"Failed to connect to QuickML endpoint ({self.endpoint_url}): {str(e)}"
+                err_msg = f"Failed to connect to QuickML endpoint ({endpoint}): {str(e)}"
                 if not self.allows_baseline:
                     raise QuickMLError(err_msg, status_code=504, details=str(e))
-                # Log warning and fall through to dev baseline ONLY if enabled
                 print(f"[WARNING] QuickML connection error: {err_msg}. Using labelled dev baseline.")
 
-        # If not configured:
+        # If not configured and dev baseline is disallowed:
         if not self.allows_baseline:
             raise QuickMLError(
-                "QuickML endpoint is not configured in environment variables (QUICKML_ENDPOINT_URL is unset). "
-                "Production mode rejects unverified models. Please set QUICKML_ENDPOINT_URL.",
+                "QuickML endpoint is not configured or unreachable. Production mode rejects unverified models.",
                 status_code=503
             )
 
-        # Explicitly labelled Development Baseline (Starter Kit logic)
+        # Development Baseline
         return self._compute_dev_baseline(input_df), "Local Baseline (Dev / Offline Fallback - NOT Published QuickML)"
 
     def _compute_dev_baseline(self, input_df: pd.DataFrame) -> List[float]:
-        """
-        Deterministic local baseline derived from Starter Kit predict.py logic.
-        Explicitly marked and isolated so it cannot be mistaken for QuickML output.
-        """
         hours = pd.to_datetime(input_df["timestamp"]).dt.hour
         base_load = 120.0 + 30.0 * np.sin(2 * np.pi * (hours - 6) / 24)
         cooling_load = np.maximum(0.0, input_df["ambient_temp_c"] - 24.0) * 8.5
