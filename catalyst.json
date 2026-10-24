@@ -1,0 +1,25 @@
+{
+  "name": "hacksphere-microgrid-engine",
+  "version": "1.0.0",
+  "description": "HackSphere 3.0: Smart Energy Microgrid & Demand Forecasting Engine",
+  "main": "backend/app.py",
+  "scripts": {
+    "start": "python3 backend/app.py",
+    "test": "python3 -m unittest discover -s tests",
+    "eval": "cd HackSphere_Starter_Kit && python3 test_eval.py"
+  },
+  "catalyst": {
+    "project_name": "HackSphere-Microgrid",
+    "services": {
+      "appsail": {
+        "name": "hacksphere-backend",
+        "stack": "python3.11",
+        "build_command": "pip install -r requirements.txt",
+        "run_command": "python3 backend/app.py"
+      },
+      "client": {
+        "source": "frontend"
+      }
+    }
+  }
+}

@@ -110,9 +110,22 @@ class TestBackendIntegration(unittest.TestCase):
         data = resp.get_json()
         self.assertIn("QuickML endpoint is not configured", data["error"])
 
-        # Reset to allow dev baseline for subsequent tests
-        os.environ["ALLOW_DEV_LOCAL_BASELINE"] = "1"
-        app_module.quickml_client = QuickMLClient()
+    def test_serve_frontend_static_assets(self):
+        # Index HTML
+        resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"HackSphere 3.0", resp.data)
+        self.assertIn(b"forecastChart", resp.data)
+
+        # CSS Stylesheet
+        resp_css = self.client.get("/styles.css")
+        self.assertEqual(resp_css.status_code, 200)
+        self.assertIn(b"--bg-main", resp_css.data)
+
+        # JavaScript Engine
+        resp_js = self.client.get("/app.js")
+        self.assertEqual(resp_js.status_code, 200)
+        self.assertIn(b"executeForecastRequest", resp_js.data)
 
 
 if __name__ == "__main__":

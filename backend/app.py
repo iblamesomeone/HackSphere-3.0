@@ -18,10 +18,17 @@ from backend.validator import validate_telemetry_dataframe, ValidationError
 from backend.quickml_client import QuickMLClient, QuickMLError
 from backend.transition_controller import simulate_battery_dispatch
 
-app = Flask(__name__)
+frontend_folder = os.path.join(os.path.dirname(__file__), "..", "frontend")
+app = Flask(__name__, static_folder=frontend_folder, static_url_path="")
 CORS(app)
 
 quickml_client = QuickMLClient()
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Serves the frontend single-page dashboard."""
+    return app.send_static_file("index.html")
 
 
 @app.route("/api/health", methods=["GET"])
