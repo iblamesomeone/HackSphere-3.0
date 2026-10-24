@@ -1,8 +1,8 @@
 # HackSphere 3.0 - Project Progress Tracker
 
 ## Status Summary
-- **Current Milestone**: Milestone 4 (Dashboard & Static Integration) Completed -> Next: QuickML Authentication & Endpoint Integration (Milestone 3)
-- **Overall Status**: In Progress (Local End-to-End System Operational)
+- **Current Milestone**: Milestone 3 In Progress (Zoho MCP Live Connected & Authenticated; QuickML Project Discovered)
+- **Overall Status**: Active Development & Model Training
 
 ---
 
@@ -10,10 +10,19 @@
 
 | Workstream | Subsystem / Scope | Agent Ownership | Status |
 | :--- | :--- | :--- | :--- |
-| **WS1: ML Pipeline** | QuickML training, evaluation against `train_telemetry.csv`, `predict.py` contract compliance | ML Agent | Console training guide prepared; OAuth pending user login |
+| **WS1: ML Pipeline** | QuickML training, evaluation against `train_telemetry.csv`, `predict.py` contract compliance | ML Agent | Zoho MCP Connected; Training Pipeline In Progress |
 | **WS2: Backend Engine** | Telemetry ingestion, validation, QuickML client, transition controller & battery SOC logic | Backend Agent | Completed & Unit Tested |
 | **WS3: Frontend Dashboard**| Responsive UI, 24h demand chart, grid state badges, SOC indicator, alert system | Frontend Agent | Completed & Integrated |
 | **WS4: QA & Release** | `test_eval.py` validation, edge case & boundary tests, security audit, Catalyst configuration | QA/Release Agent | 13/13 tests passing |
+
+---
+
+## Discovered Zoho Catalyst Environment (via Zoho MCP)
+- **Catalyst Project Name**: `HackSphere-3`
+- **Project ID**: `88718000000013063`
+- **Environment ZGID / Org ID**: `60093044321`
+- **Domain**: `https://hacksphere-3-60093044321.development.catalystserverless.in`
+- **Available MCP Tools**: 180 total tools (including `CatalystbyZoho_List_QuickML_Endpoints`, `CatalystbyZoho_Create_QuickML_Endpoint`, `CatalystbyZoho_Publish_QuickML_Endpoint`, `CatalystbyZoho_Create_Forecasting_Pipeline`)
 
 ---
 
@@ -36,11 +45,12 @@
 
 ### Milestone 3: Zoho Catalyst QuickML Training & Integration
 - [x] Ingestion & feature schema verification: 4 input columns (`timestamp`, `ambient_temp_c`, `humidity_pct`, `solar_irradiance_wm2`), target `target_demand_kw`
-- [x] Zoho MCP authentication & OAuth scope discovery (`quickml.*`, `zohocatalyst.fullaccess.all`)
-- [x] Documented exact authorization steps and Zoho Console training procedure
-- [ ] Model training execution on Zoho Catalyst QuickML console using `train_telemetry.csv`
-- [ ] Published endpoint URL and auth token injection into `.env`
-- [x] Verified `predict.py` with `test_eval.py` (Outputs SUCCESS)
+- [x] Zoho MCP authentication successfully verified and connected (180 tools available)
+- [x] Catalyst Project `HackSphere-3` (ID `88718000000013063`, Org `60093044321`) inspected
+- [ ] Upload `train_telemetry.csv` and train regression model in QuickML
+- [ ] Create and publish QuickML endpoint
+- [ ] Update `QUICKML_ENDPOINT_URL` in `.env` and `HackSphere_Starter_Kit/predict.py`
+- [x] Verified `predict.py` contract with `test_eval.py` (Outputs SUCCESS)
 
 ### Milestone 4: Interactive Web Dashboard
 - [x] Polished, responsive dark-theme dashboard (`frontend/index.html`, `frontend/styles.css`)
@@ -79,10 +89,3 @@
 ## Test Execution Summary
 - `python3 -m unittest discover -s tests`: **13 tests passed** (0 failures, 0 errors in 0.041s).
 - `python3 test_eval.py`: **SUCCESS** (1000 test rows evaluated, valid array returned).
-
----
-
-## Critical Blocker: QuickML Model Publication
-Zoho MCP requires an authorized user OAuth session (`Bearer` token from `https://catalyst.zohomcp.in/.well-known/oauth-protected-resource`).
-- **Immediate Step**: Train model on Zoho Catalyst QuickML Console or authenticate MCP with user's Zoho account.
-- **Next Action**: Once endpoint is published, configure `QUICKML_ENDPOINT_URL` in `.env`, verify via `/api/health`, and proceed to final deployment packaging.
