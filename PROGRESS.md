@@ -59,17 +59,21 @@
 - [x] Connected real QuickML model predictions to `backend/quickml_client.py` and `HackSphere_Starter_Kit/predict.py`
 - [x] Verified `predict.py` contract with `test_eval.py` on 1,000 real rows (Outputs **SUCCESS**, Sample: `[235.11, 233.11, 233.79]...`)
 
-### Milestone 4: Interactive Web Dashboard
-- [x] Polished, responsive dark-theme dashboard (`frontend/index.html`, `frontend/styles.css`)
-- [x] 24-hour dual-axis demand load curve & simulated battery SOC chart (`frontend/app.js` using Chart.js)
-- [x] Visual threshold guides (160 kW transition line, 200 kW overload line)
-- [x] Drag-and-drop CSV file ingestion with clear validation and size hints
-- [x] 24-hour manual weather vector input editor with diurnal defaults
+### Milestone 4: Interactive Web Dashboard — Houstatlantavegas Energy Forecast
+- [x] Bespoke editorial research terminal visual identity (warm ivory `#F7E8D8`, cream `#FFF7EF`, peach `#F2B58F`, burnt orange `#E77B4B`, terracotta `#A94E30`, espresso `#30231F`, coral alert `#F5D2C8`/`#852E24`, forest green `#486B51`)
+- [x] Typography pairing: `DM Serif Display` for masthead and titles, `DM Sans` for body/controls, `IBM Plex Mono` for tabular metrics and telemetry
+- [x] Editorial slim masthead featuring team identity `HOUSTATLANTAVEGAS` and product title `Energy Forecast`
+- [x] Zero cloud-provider or vendor implementation branding in client-facing UI
+- [x] Dynamic system availability indicator derived strictly from actual backend `/api/health` status
+- [x] Reorganized analytical layout: 380px dedicated ingestion column + prominent forecast centerpiece
+- [x] Chronologically sorted 24-hour dual-axis load curve with secondary simulated battery SOC axis
+- [x] Visual threshold guides (160 kW terracotta dashed line, 200 kW coral overload line)
+- [x] Pale coral critical overload alert banner with affected hours and peak observed demand
+- [x] Compact drag-and-drop CSV ingestion with column schema hint and receipt card
+- [x] 24-hour manual weather vector input table with diurnal default reset
 - [x] 1-Click sample telemetry loader (`/api/sample`) for instant end-to-end verification
-- [x] Real-time power dispatch badges (`Main Grid` vs `Renewable Storage`)
-- [x] Critical overload alert banners with sound/visual pulse on `>= 200 kW`
-- [x] Empty, loading spinner, and explicit API unavailable / unconfigured error states
-- [x] Live system audit log console displaying microgrid dispatch decisions
+- [x] Editorial hourly dispatch schedule table and monospace system audit log console
+- [x] Explicit disclosure across all panels that battery SOC and dispatch are simulated outputs
 
 ### Milestone 5: Full System Integration, QA & Deployment
 - [x] Controller boundary tests passing (5 tests)

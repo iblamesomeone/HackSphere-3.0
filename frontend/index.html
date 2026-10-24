@@ -3,120 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HackSphere 3.0 | Smart Energy Microgrid & Demand Forecasting Engine</title>
+  <title>Energy Forecast | HOUSTATLANTAVEGAS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <!-- Chart.js for high performance load curve and SOC visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="app-layout">
-    <!-- Top Navigation Header -->
-    <header class="top-nav">
-      <div class="brand">
-        <div class="logo-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-        </div>
-        <div>
-          <h1 class="brand-title">HackSphere 3.0</h1>
-          <p class="brand-subtitle">Smart Energy Microgrid & 24h Demand Forecasting Engine</p>
-        </div>
+  <div class="terminal-container">
+    
+    <!-- Editorial Masthead -->
+    <header class="masthead">
+      <div class="masthead-brand">
+        <span class="masthead-team">HOUSTATLANTAVEGAS</span>
+        <h1 class="masthead-title">Energy Forecast</h1>
+        <p class="masthead-tagline">Smart microgrid demand intelligence & 24-hour predictive dispatch</p>
       </div>
 
-      <div class="header-badges">
-        <!-- Model Engine Indicator -->
-        <div id="model-source-pill" class="status-pill pill-warning">
-          <span class="status-dot"></span>
-          <span id="model-source-text">Checking QuickML Engine...</span>
+      <div class="masthead-status-group">
+        <!-- System availability derived strictly from backend -->
+        <div id="system-status-indicator" class="status-indicator status-connecting">
+          <span class="status-pip"></span>
+          <span id="backend-status-text" class="status-label">CONNECTING...</span>
         </div>
-        <!-- Catalyst App Status -->
-        <div class="status-pill pill-dark">
-          <span class="catalyst-tag">Zoho Catalyst</span>
-          <span class="pill-divider">•</span>
-          <span id="backend-status-text">Connecting...</span>
+        <!-- Engine verification badge -->
+        <div id="model-source-pill" class="engine-pill engine-pending">
+          <span id="model-source-text">Verifying Engine...</span>
         </div>
       </div>
     </header>
 
-    <!-- Critical Overload Alert Banner (Appears dynamically if Demand >= 200 kW) -->
-    <div id="critical-alert-banner" class="alert-banner hidden">
-      <div class="alert-icon-box">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-          <line x1="12" y1="9" x2="12" y2="13"></line>
-          <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
+    <!-- Critical Overload Alert Panel (Displayed when demand >= 200 kW) -->
+    <section id="critical-alert-banner" class="alert-panel hidden" aria-live="assertive" role="alert">
+      <div class="alert-meta">
+        <span class="alert-eyebrow">CRITICAL OVERLOAD ADVISORY</span>
+        <button id="dismiss-alert-btn" class="alert-dismiss" aria-label="Dismiss alert">Dismiss</button>
       </div>
-      <div class="alert-content">
-        <strong class="alert-title">CRITICAL OVERLOAD ALERT TRIGGERED</strong>
-        <p id="critical-alert-desc" class="alert-desc">Forecasted demand exceeds safety limit (&ge; 200 kW). Automatic shedding and peak discharge protocols recommended.</p>
+      <div class="alert-body">
+        <div class="alert-main-text">
+          <h2 class="alert-heading">Peak demand safety threshold (&ge; 200 kW) exceeded</h2>
+          <p id="critical-alert-desc" class="alert-description">
+            Simulated storage discharge and automated load shedding recommended for scheduled overload intervals.
+          </p>
+        </div>
+        <div class="alert-stats">
+          <div class="alert-stat-block">
+            <span class="alert-stat-label">Critical Hours</span>
+            <span id="alert-overload-hours" class="alert-stat-num">--</span>
+          </div>
+          <div class="alert-stat-block">
+            <span class="alert-stat-label">Peak Observed</span>
+            <span id="alert-overload-peak" class="alert-stat-num">-- kW</span>
+          </div>
+        </div>
       </div>
-      <button id="dismiss-alert-btn" class="alert-close-btn">&times;</button>
-    </div>
+    </section>
 
-    <!-- Main Dashboard Grid -->
-    <main class="dashboard-grid">
-      <!-- Left Column: Ingestion Controls & Telemetry Input -->
-      <section class="control-panel card">
-        <div class="card-header">
-          <h2>Telemetry Ingestion</h2>
-          <span class="badge-subtle">24-Hour Horizon</span>
+    <!-- Key Metrics Ribbon -->
+    <section class="metrics-ribbon" aria-label="Key Forecast Metrics">
+      <!-- Peak Demand (Highest Visual Weight) -->
+      <div class="metric-cell metric-lead">
+        <span class="metric-eyebrow">Forecast Peak Demand</span>
+        <div class="metric-hero-val">
+          <span id="kpi-peak-demand" class="num-display">--</span>
+          <span class="unit-label">kW</span>
+        </div>
+        <span id="kpi-peak-status" class="metric-detail">Awaiting forecast execution</span>
+      </div>
+
+      <!-- Critical Overload Hours -->
+      <div class="metric-cell">
+        <span class="metric-eyebrow">Critical Overload Hours</span>
+        <div class="metric-hero-val">
+          <span id="kpi-overload-count" class="num-display">0</span>
+          <span class="unit-label">hrs</span>
+        </div>
+        <span id="kpi-overload-sub" class="metric-detail">Threshold rule: &ge; 200 kW</span>
+      </div>
+
+      <!-- Active Grid Operating Mode -->
+      <div class="metric-cell">
+        <span class="metric-eyebrow">Operating Grid Mode</span>
+        <div class="metric-mode-container">
+          <span id="kpi-grid-mode-badge" class="mode-badge-editorial mode-idle">AWAITING RUN</span>
+        </div>
+        <span id="kpi-mode-sub" class="metric-detail">Rule: &gt; 160 kW or 18:00–22:00</span>
+      </div>
+
+      <!-- Simulated Battery State of Charge -->
+      <div class="metric-cell">
+        <span class="metric-eyebrow">Simulated Battery SOC</span>
+        <div class="metric-soc-container">
+          <span id="kpi-soc-pct" class="num-display">--%</span>
+          <div class="soc-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+            <div id="soc-meter-bar" class="soc-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <span class="metric-detail metric-disclosure">Simulated output &bull; Not actual hardware</span>
+      </div>
+    </section>
+
+    <!-- Core Analytical Workspace: Left Input Workspace + Right Forecast Visualization -->
+    <div class="workspace-layout">
+
+      <!-- Left Column: Telemetry Input Console -->
+      <aside class="input-workspace">
+        <div class="panel-header">
+          <h2 class="panel-title">Telemetry Ingestion</h2>
+          <span class="panel-tag">24H Window</span>
         </div>
 
-        <!-- Ingestion Tabs -->
-        <div class="tab-group">
-          <button id="tab-csv" class="tab-btn active">CSV Upload</button>
-          <button id="tab-manual" class="tab-btn">Manual Inputs</button>
-          <button id="btn-quick-sample" class="tab-btn sample-btn" title="Load sample telemetry from sample_test_input.csv">⚡ 1-Click Sample</button>
+        <!-- Mode Selectors -->
+        <div class="ingest-switch" role="tablist">
+          <button id="tab-csv" class="switch-btn active" role="tab" aria-selected="true">CSV File</button>
+          <button id="tab-manual" class="switch-btn" role="tab" aria-selected="false">Manual Vectors</button>
+          <button id="btn-quick-sample" class="switch-btn sample-switch" title="Load real 24-hour test telemetry from server">Sample Data</button>
         </div>
 
-        <!-- Tab 1: CSV Upload Form -->
-        <div id="panel-csv" class="tab-content active">
-          <div id="drop-zone" class="drop-zone">
-            <input type="file" id="csv-file-input" accept=".csv" class="file-input-hidden" />
-            <div class="drop-zone-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
+        <!-- Mode 1: CSV Upload -->
+        <div id="panel-csv" class="ingest-view active">
+          <div id="drop-zone" class="file-drop-card" tabindex="0">
+            <input type="file" id="csv-file-input" accept=".csv" class="sr-only" />
+            <div class="drop-text-group">
+              <span class="drop-primary-text">Select CSV or drag file here</span>
+              <span class="drop-schema-hint">Required columns: timestamp, ambient_temp_c, humidity_pct, solar_irradiance_wm2</span>
             </div>
-            <p class="drop-prompt"><strong>Click to upload</strong> or drag & drop CSV</p>
-            <span class="file-hint">Expects: timestamp, ambient_temp_c, humidity_pct, solar_irradiance_wm2</span>
-            <div id="selected-file-info" class="selected-file-badge hidden">
-              <span id="selected-file-name">filename.csv</span>
-              <button id="clear-file-btn" class="btn-text">&times;</button>
+            <div id="selected-file-info" class="file-receipt hidden">
+              <span id="selected-file-name" class="receipt-name">telemetry.csv</span>
+              <button id="clear-file-btn" class="receipt-clear" title="Remove file" aria-label="Remove file">Remove</button>
             </div>
           </div>
 
-          <div class="param-row">
-            <label for="initial-soc-csv">Initial Battery SOC (%):</label>
-            <input type="number" id="initial-soc-csv" value="85" min="10" max="100" step="5" class="num-input" />
+          <div class="input-param-box">
+            <label for="initial-soc-csv" class="field-label">Initial Battery SOC (%)</label>
+            <div class="input-field-wrap">
+              <input type="number" id="initial-soc-csv" value="85" min="10" max="100" step="5" class="editorial-input" />
+              <span class="field-unit">%</span>
+            </div>
           </div>
 
-          <button id="btn-run-csv-forecast" class="btn-primary" disabled>
-            <span class="btn-icon">⚡</span> Run 24h Demand Forecast
+          <button id="btn-run-csv-forecast" class="btn-execute" disabled>
+            Execute Demand Forecast
           </button>
         </div>
 
-        <!-- Tab 2: Manual 24h Telemetry Form -->
-        <div id="panel-manual" class="tab-content">
-          <div class="manual-table-header">
-            <span>Hourly Weather Vectors</span>
-            <button id="btn-fill-defaults" class="btn-small">Fill 24h Default Curve</button>
+        <!-- Mode 2: Manual 24h Hourly Table -->
+        <div id="panel-manual" class="ingest-view">
+          <div class="manual-controls-sub">
+            <span class="sub-label">Hourly Weather Vectors</span>
+            <button id="btn-fill-defaults" class="btn-secondary-link">Reset Diurnal Defaults</button>
           </div>
-          <div class="manual-table-container">
-            <table class="manual-table" id="manual-input-table">
+
+          <div class="manual-table-scroll">
+            <table class="editorial-table manual-entry-table" id="manual-input-table">
               <thead>
                 <tr>
                   <th>Hour</th>
-                  <th>Temp (°C)</th>
+                  <th>Temp (&deg;C)</th>
                   <th>Humidity (%)</th>
-                  <th>Solar (W/m²)</th>
+                  <th>Solar (W/m&sup2;)</th>
                 </tr>
               </thead>
               <tbody id="manual-input-tbody">
@@ -125,145 +171,134 @@
             </table>
           </div>
 
-          <div class="param-row">
-            <label for="initial-soc-manual">Initial Battery SOC (%):</label>
-            <input type="number" id="initial-soc-manual" value="85" min="10" max="100" step="5" class="num-input" />
+          <div class="input-param-box">
+            <label for="initial-soc-manual" class="field-label">Initial Battery SOC (%)</label>
+            <div class="input-field-wrap">
+              <input type="number" id="initial-soc-manual" value="85" min="10" max="100" step="5" class="editorial-input" />
+              <span class="field-unit">%</span>
+            </div>
           </div>
 
-          <button id="btn-run-manual-forecast" class="btn-primary">
-            <span class="btn-icon">⚡</span> Run 24h Demand Forecast
+          <button id="btn-run-manual-forecast" class="btn-execute">
+            Execute Demand Forecast
           </button>
         </div>
 
-        <!-- Simulation & Model Disclaimer -->
-        <div class="card-footer-notice">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          <span>Battery SOC and dispatch values are strictly <strong>Simulated Outputs</strong> following microgrid threshold logic.</span>
+        <div class="panel-disclaimer">
+          <p>
+            Operating Mode transitions: Demand &gt; 160 kW or peak evening window (18:00&ndash;22:00) shifts generation to Renewable Storage. Demand &ge; 200 kW triggers critical overload alert.
+          </p>
         </div>
-      </section>
+      </aside>
 
-      <!-- Right Column: Microgrid State, KPI Stats, Forecast Curve & Logs -->
-      <section class="results-panel">
-        <!-- Live KPI Stats Grid -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <span class="kpi-label">Peak Demand (24h)</span>
-            <div class="kpi-value-row">
-              <span id="kpi-peak-demand" class="kpi-number">--</span>
-              <span class="kpi-unit">kW</span>
+      <!-- Right Column: Main Forecast Visualization -->
+      <main class="forecast-workspace">
+        <section class="forecast-canvas-card">
+          <div class="chart-masthead">
+            <div class="chart-title-block">
+              <h2 class="chart-heading">24-Hour Microgrid Demand & Storage Curve</h2>
+              <p class="chart-subhead">Predicted load demand timeline aligned with simulated battery state of charge</p>
             </div>
-            <span id="kpi-peak-status" class="kpi-sub">Awaiting forecast</span>
-          </div>
-
-          <div class="kpi-card">
-            <span class="kpi-label">Active Power Source</span>
-            <div id="kpi-grid-mode-badge" class="badge-mode mode-neutral">AWAITING RUN</div>
-            <span id="kpi-mode-sub" class="kpi-sub">Rule: >160kW or 18:00–22:00</span>
-          </div>
-
-          <div class="kpi-card">
-            <span class="kpi-label">Simulated Battery SOC</span>
-            <div class="soc-display-row">
-              <span id="kpi-soc-pct" class="kpi-number">--%</span>
-              <div class="soc-meter-bg">
-                <div id="soc-meter-bar" class="soc-meter-fill" style="width: 0%;"></div>
-              </div>
-            </div>
-            <span class="kpi-sub">(Simulated Battery State)</span>
-          </div>
-
-          <div class="kpi-card">
-            <span class="kpi-label">Critical Overload Events</span>
-            <div class="kpi-value-row">
-              <span id="kpi-overload-count" class="kpi-number">0</span>
-              <span class="kpi-unit">hours (&ge;200 kW)</span>
-            </div>
-            <span id="kpi-overload-sub" class="kpi-sub">Threshold rule: &ge; 200 kW</span>
-          </div>
-        </div>
-
-        <!-- Main Chart Card: Demand Forecast & Battery SOC -->
-        <div class="card chart-card">
-          <div class="chart-header">
-            <div>
-              <h3>24-Hour Energy Demand Forecast & Simulated Battery SOC</h3>
-              <p class="chart-subtitle">Hourly dispatch transitions between Main Grid and Renewable Battery Storage</p>
-            </div>
-            <div class="chart-legend-custom">
-              <span class="legend-item"><span class="legend-box color-demand"></span> Predicted Demand (kW)</span>
-              <span class="legend-item"><span class="legend-box color-threshold"></span> 160 kW Threshold</span>
-              <span class="legend-item"><span class="legend-box color-overload"></span> 200 kW Overload Limit</span>
-              <span class="legend-item"><span class="legend-box color-soc"></span> Battery SOC % (Simulated)</span>
+            
+            <div class="chart-legend-editorial">
+              <span class="legend-entry">
+                <span class="legend-swatch swatch-demand"></span>
+                <span class="legend-text">Predicted Demand (kW)</span>
+              </span>
+              <span class="legend-entry">
+                <span class="legend-swatch swatch-threshold"></span>
+                <span class="legend-text">160 kW Threshold</span>
+              </span>
+              <span class="legend-entry">
+                <span class="legend-swatch swatch-overload"></span>
+                <span class="legend-text">200 kW Overload Limit</span>
+              </span>
+              <span class="legend-entry">
+                <span class="legend-swatch swatch-soc"></span>
+                <span class="legend-text">Simulated Battery SOC (%)</span>
+              </span>
             </div>
           </div>
 
           <!-- Empty State -->
-          <div id="chart-empty-state" class="empty-state">
-            <div class="empty-icon">📊</div>
-            <h4>No Forecast Generated Yet</h4>
-            <p>Upload a CSV file or click <strong>⚡ 1-Click Sample</strong> on the left to compute real-time demand curves and power dispatch.</p>
+          <div id="chart-empty-state" class="chart-state-box">
+            <div class="state-message">
+              <h3 class="state-title">No Forecast Generated</h3>
+              <p class="state-desc">Upload a telemetry CSV or click <strong>Sample Data</strong> on the left to compute real-time demand predictions and battery dispatch transitions.</p>
+            </div>
           </div>
 
           <!-- Loading State -->
-          <div id="chart-loading-state" class="loading-state hidden">
-            <div class="spinner"></div>
-            <p>Calling Forecasting Engine & Evaluating Grid Rules...</p>
+          <div id="chart-loading-state" class="chart-state-box hidden">
+            <div class="state-spinner"></div>
+            <p class="state-loading-text">Calling inference engine & computing dispatch schedule...</p>
           </div>
 
-          <!-- Canvas Container -->
-          <div class="chart-canvas-wrapper">
+          <!-- Canvas Wrapper -->
+          <div class="chart-viewport">
             <canvas id="forecastChart"></canvas>
           </div>
-        </div>
+        </section>
 
-        <!-- Bottom Tabs: 24h Hourly Dispatch Table & System Logs -->
-        <div class="card table-card">
-          <div class="card-header border-bottom">
-            <div class="tab-group-inline">
-              <button id="view-tab-table" class="view-btn active">Hourly Dispatch Schedule</button>
-              <button id="view-tab-logs" class="view-btn">System Audit Logs</button>
+        <!-- Secondary Section: Dispatch Schedule & Audit Log -->
+        <section class="record-workspace">
+          <div class="record-header">
+            <div class="record-tab-nav" role="tablist">
+              <button id="view-tab-table" class="record-tab active" role="tab">Hourly Dispatch Schedule</button>
+              <button id="view-tab-logs" class="record-tab" role="tab">System Audit Log</button>
             </div>
-            <span id="table-row-count" class="badge-subtle">0 hours loaded</span>
+            <span id="table-row-count" class="record-count">0 hours recorded</span>
           </div>
 
-          <!-- Hourly Dispatch Table View -->
-          <div id="view-panel-table" class="view-content active">
-            <div class="table-responsive">
-              <table class="dispatch-table">
+          <!-- View 1: Dispatch Table -->
+          <div id="view-panel-table" class="record-panel active">
+            <div class="table-frame">
+              <table class="editorial-table dispatch-table">
                 <thead>
                   <tr>
                     <th>Timestamp</th>
                     <th>Demand (kW)</th>
                     <th>Grid Mode</th>
-                    <th>Critical Overload</th>
+                    <th>Overload Status</th>
                     <th>Simulated Battery SOC</th>
-                    <th>Decision Reason</th>
+                    <th>Decision Basis</th>
                   </tr>
                 </thead>
                 <tbody id="dispatch-tbody">
                   <tr>
-                    <td colspan="6" class="text-center text-muted">Awaiting telemetry input...</td>
+                    <td colspan="6" class="table-empty-row">Awaiting telemetry input to generate dispatch schedule.</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- System Logs View -->
-          <div id="view-panel-logs" class="view-content">
-            <div class="logs-console" id="logs-console">
-              <div class="log-line">[SYSTEM READY] Microgrid engine initialized.</div>
-              <div class="log-line">[CONTROLLER] Rules: Demand > 160kW or 18:00–22:00 -> Renewable Storage; Demand >= 200kW -> Critical Alert.</div>
-              <div class="log-line">[MODEL CLIENT] Checking QuickML endpoint configuration...</div>
+          <!-- View 2: System Audit Log -->
+          <div id="view-panel-logs" class="record-panel">
+            <div class="audit-log-terminal" id="logs-console">
+              <div class="log-entry log-entry-info">[SYSTEM INITIALIZED] Energy Forecast Terminal online.</div>
+              <div class="log-entry log-entry-info">[DISPATCH RULES] Thresholds active: &gt;160 kW or 18:00&ndash;22:00 &rarr; Renewable Storage; &ge;200 kW &rarr; Overload Alert.</div>
+              <div class="log-entry log-entry-info">[INFERENCE] Direct REST client ready.</div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+      </main>
+
+    </div>
+
+    <!-- Editorial Footer -->
+    <footer class="editorial-footer">
+      <div class="footer-left">
+        <span class="footer-team">HOUSTATLANTAVEGAS</span>
+        <span class="footer-divider">&bull;</span>
+        <span class="footer-note">Smart Energy Microgrid Intelligence</span>
+      </div>
+      <div class="footer-right">
+        <span>All battery capacity and dispatch flows are simulated indicators.</span>
+      </div>
+    </footer>
+
   </div>
 
   <script src="app.js"></script>

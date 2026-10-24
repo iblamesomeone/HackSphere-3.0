@@ -114,13 +114,13 @@ class TestBackendIntegration(unittest.TestCase):
         # Index HTML
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"HackSphere 3.0", resp.data)
+        self.assertIn(b"HOUSTATLANTAVEGAS", resp.data)
         self.assertIn(b"forecastChart", resp.data)
 
         # CSS Stylesheet
         resp_css = self.client.get("/styles.css")
         self.assertEqual(resp_css.status_code, 200)
-        self.assertIn(b"--bg-main", resp_css.data)
+        self.assertIn(b"--bg-ivory", resp_css.data)
 
         # JavaScript Engine
         resp_js = self.client.get("/app.js")
