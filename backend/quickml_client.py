@@ -50,6 +50,10 @@ class QuickMLClient:
         self.org_id = os.environ.get("QUICKML_ORG_ID", "60093044321").strip()
         self.environment = os.environ.get("QUICKML_ENVIRONMENT", "Development").strip()
         self.auth_token = os.environ.get("QUICKML_AUTH_TOKEN", "").strip()
+        self.refresh_token = os.environ.get("QUICKML_REFRESH_TOKEN", "").strip()
+        self.client_id = os.environ.get("QUICKML_CLIENT_ID", "").strip()
+        self.client_secret = os.environ.get("QUICKML_CLIENT_SECRET", "").strip()
+        self.accounts_url = os.environ.get("QUICKML_ACCOUNTS_URL", "https://accounts.zoho.in/oauth/v2/token").strip()
         self.timeout_seconds = float(os.environ.get("QUICKML_TIMEOUT_SECONDS", "30"))
 
     def is_configured(self) -> bool:
@@ -61,12 +65,38 @@ class QuickMLClient:
         return os.environ.get("ALLOW_DEV_LOCAL_BASELINE", "0").lower() in ("1", "true", "yes")
 
     def _get_active_oauth_token(self) -> str:
-        """Retrieves active OAuth access token from environment, or auto-refreshes via Catalyst CLI."""
+        """Retrieves active OAuth access token from environment, refreshes via refresh token, or CLI."""
         token = os.environ.get("QUICKML_AUTH_TOKEN", self.auth_token).strip()
         if token:
             return token
 
-        # Auto-refresh using catalyst cli credential store if available
+        # If refresh token & client credentials are configured (e.g. on AppSail / production)
+        refresh_token = os.environ.get("QUICKML_REFRESH_TOKEN", self.refresh_token).strip()
+        client_id = os.environ.get("QUICKML_CLIENT_ID", self.client_id).strip()
+        client_secret = os.environ.get("QUICKML_CLIENT_SECRET", self.client_secret).strip()
+
+        if refresh_token and client_id and client_secret:
+            try:
+                resp = requests.post(
+                    self.accounts_url,
+                    data={
+                        "refresh_token": refresh_token,
+                        "client_id": client_id,
+                        "client_secret": client_secret,
+                        "grant_type": "refresh_token"
+                    },
+                    timeout=10
+                )
+                if resp.status_code == 200:
+                    token_data = resp.json()
+                    new_token = token_data.get("access_token", "").strip()
+                    if new_token:
+                        self.auth_token = new_token
+                        return new_token
+            except Exception:
+                pass
+
+        # Auto-refresh using catalyst cli credential store if available (local dev)
         script_path = os.path.join(os.path.dirname(__file__), "get_catalyst_token.js")
         if os.path.exists(script_path):
             try:

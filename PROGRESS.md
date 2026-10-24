@@ -76,23 +76,36 @@
 - [x] Ingestion API contract & error state integration tests passing (7 tests)
 - [x] Frontend static assets serving test passing (1 test)
 - [x] Starter Kit evaluator self-test (`test_eval.py`) passing with **SUCCESS**
-- [x] Catalyst configuration (`catalyst.json`) & `requirements.txt` prepared
+- [x] Catalyst AppSail production deployment verified live at `https://hacksphere-backend-50047137836.development.catalystappsail.in`
+- [x] Container port binding to `X_ZOHO_CATALYST_LISTEN_PORT` (9000) using `werkzeug.serving.run_simple`
+- [x] Bundled Linux Python 3.11 pre-compiled wheels in `app_package/` with dynamic `sys.path` injection
+- [x] Autonomous OAuth token refreshing via Zoho accounts REST token endpoint
+- [x] Public live endpoints verified: `/api/health` (HTTP 200), `/` (HTTP 200 Dashboard), `/api/sample` (HTTP 200), `/api/forecast/manual` (HTTP 200, 24-hr QuickML predictions), `/api/forecast/csv` (HTTP 200, 1000-hr QuickML predictions)
 - [x] Production `README.md` documentation completed
 
 ---
 
 ## Changed Files Log
-- `HackSphere_Starter_Kit/predict.py`: Integrated real QuickML model endpoint with batch processing
-- `backend/quickml_client.py`: Connected to live QuickML endpoint with strict production error handling
-- `backend/quickml_bridge.js`: Local daemon proxy bridging authenticated Zoho MCP to standard REST inference
+- `HackSphere_Starter_Kit/predict.py`: Integrated real QuickML model endpoint with OAuth refresh token support and batch processing
+- `backend/quickml_client.py`: Connected to live QuickML REST endpoint with autonomous token acquisition and refresh
+- `backend/get_catalyst_token.js`: Auto-refreshes CLI credentials when expired
 - `backend/app.py`: Integrated health checks, static asset serving, and transition logic
+- `start_server.py`: AppSail production entrypoint loading `app_package/` and running server on `X_ZOHO_CATALYST_LISTEN_PORT`
+- `app-config.template.json`: Safe template for AppSail deployment configuration without secrets
 - `frontend/index.html`, `frontend/styles.css`, `frontend/app.js`: Interactive microgrid dashboard
 - `tests/test_transition_controller.py`, `tests/test_api_contract.py`: 13 comprehensive unit & integration tests
 - `README.md`: Submission documentation and architecture guide
-- `PROGRESS.md`: Updated with verified model performance and test evidence
+- `PROGRESS.md`: Updated with live AppSail deployment verification and test evidence
 
 ---
 
 ## Test Execution Summary
 - `python3 -m unittest discover -s tests`: **13 tests passed** (0 failures, 0 errors).
 - `cd HackSphere_Starter_Kit && python3 test_eval.py`: **SUCCESS** (1,000 test rows evaluated, real predictions generated).
+- **Live Deployment Tests**:
+  - `GET /api/health`: **HTTP 200** (`status: healthy`, `mode: production`, `quickml_configured: true`)
+  - `GET /`: **HTTP 200** (Full interactive dashboard HTML)
+  - `GET /api/sample`: **HTTP 200** (24 rows of input weather telemetry)
+  - `POST /api/forecast/manual`: **HTTP 200** (24 QuickML predictions from published model, 0 synthetic baselines)
+  - `POST /api/forecast/csv`: **HTTP 200** (1,000 QuickML predictions with full dispatch plan)
+

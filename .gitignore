@@ -33,6 +33,10 @@ ENV/
 secrets.json
 credentials.json
 catalyst_credentials.json
+app-config.json
+app-config.template.json
+app_package/
+wheels_cache/
 
 # Node / Frontend
 node_modules/

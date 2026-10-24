@@ -24,13 +24,43 @@ QUICKML_ENDPOINT_KEY = os.environ.get("QUICKML_ENDPOINT_KEY", "")
 QUICKML_ORG_ID = os.environ.get("QUICKML_ORG_ID", "60093044321")
 QUICKML_ENVIRONMENT = os.environ.get("QUICKML_ENVIRONMENT", "Development")
 QUICKML_AUTH_TOKEN = os.environ.get("QUICKML_AUTH_TOKEN", "")
+QUICKML_REFRESH_TOKEN = os.environ.get("QUICKML_REFRESH_TOKEN", "")
+QUICKML_CLIENT_ID = os.environ.get("QUICKML_CLIENT_ID", "")
+QUICKML_CLIENT_SECRET = os.environ.get("QUICKML_CLIENT_SECRET", "")
+QUICKML_ACCOUNTS_URL = os.environ.get("QUICKML_ACCOUNTS_URL", "https://accounts.zoho.in/oauth/v2/token")
 
 
 def get_oauth_token() -> str:
-    """Gets token from env or auto-refreshes from Catalyst CLI session."""
+    """Gets token from env, or refreshes via refresh token or Catalyst CLI session."""
     token = os.environ.get("QUICKML_AUTH_TOKEN", QUICKML_AUTH_TOKEN).strip()
     if token:
         return token
+
+    # Check refresh token
+    refresh_token = os.environ.get("QUICKML_REFRESH_TOKEN", QUICKML_REFRESH_TOKEN).strip()
+    client_id = os.environ.get("QUICKML_CLIENT_ID", QUICKML_CLIENT_ID).strip()
+    client_secret = os.environ.get("QUICKML_CLIENT_SECRET", QUICKML_CLIENT_SECRET).strip()
+    accounts_url = os.environ.get("QUICKML_ACCOUNTS_URL", QUICKML_ACCOUNTS_URL).strip()
+
+    if refresh_token and client_id and client_secret:
+        try:
+            resp = requests.post(
+                accounts_url,
+                data={
+                    "refresh_token": refresh_token,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "grant_type": "refresh_token"
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                new_token = data.get("access_token", "").strip()
+                if new_token:
+                    return new_token
+        except Exception:
+            pass
 
     # Check CLI token helper
     token_helper = os.path.join(os.path.dirname(__file__), "..", "backend", "get_catalyst_token.js")
