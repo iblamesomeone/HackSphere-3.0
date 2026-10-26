@@ -1,19 +1,26 @@
 import os
+import sys
+import argparse
 import subprocess
 import numpy as np
 import pandas as pd
 import requests
 
-# Load .env if present
-env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
-if os.path.exists(env_file):
-    with open(env_file, "r") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                if k.strip() not in os.environ:
-                    os.environ[k.strip()] = v.strip()
+# Load .env if present (check local dir, parent dir, or current working dir)
+for possible_env in [
+    os.path.join(os.path.dirname(__file__), ".env"),
+    os.path.join(os.path.dirname(__file__), "..", ".env"),
+    os.path.join(os.getcwd(), ".env")
+]:
+    if os.path.exists(possible_env):
+        with open(possible_env, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    if k.strip() not in os.environ:
+                        os.environ[k.strip()] = v.strip()
+        break
 
 PROJECT_ID = os.environ.get("QUICKML_PROJECT_ID", "88718000000013063")
 QUICKML_ENDPOINT_URL = os.environ.get(
@@ -63,14 +70,18 @@ def get_oauth_token() -> str:
             pass
 
     # Check CLI token helper
-    token_helper = os.path.join(os.path.dirname(__file__), "..", "backend", "get_catalyst_token.js")
-    if os.path.exists(token_helper):
-        try:
-            proc = subprocess.run(["node", token_helper], capture_output=True, text=True, timeout=5)
-            if proc.returncode == 0 and proc.stdout.strip():
-                return proc.stdout.strip()
-        except Exception:
-            pass
+    for token_helper_path in [
+        os.path.join(os.path.dirname(__file__), "..", "backend", "get_catalyst_token.js"),
+        os.path.join(os.path.dirname(__file__), "backend", "get_catalyst_token.js"),
+        os.path.join(os.getcwd(), "backend", "get_catalyst_token.js")
+    ]:
+        if os.path.exists(token_helper_path):
+            try:
+                proc = subprocess.run(["node", token_helper_path], capture_output=True, text=True, timeout=5)
+                if proc.returncode == 0 and proc.stdout.strip():
+                    return proc.stdout.strip()
+            except Exception:
+                pass
     return ""
 
 
@@ -140,7 +151,34 @@ def predict(input_df: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    print("Testing predict.py on sample_test_input.csv...")
-    sample_df = pd.read_csv("sample_test_input.csv")
-    preds = predict(sample_df)
-    print(f"Generated {len(preds)} predictions. First 5 samples:\n{preds[:5]}")
+    parser = argparse.ArgumentParser(description="HackSphere 3.0 QuickML Demand Predictor")
+    parser.add_argument("--input", "-i", default="sample_test_input.csv", help="Input CSV filepath")
+    parser.add_argument("--output", "-o", default="predictions.csv", help="Output predictions CSV filepath")
+    args = parser.parse_args()
+
+    input_path = args.input
+    if not os.path.exists(input_path):
+        for candidate in [
+            os.path.join(os.path.dirname(__file__), args.input),
+            os.path.join(os.path.dirname(__file__), "HackSphere_Starter_Kit", args.input),
+            os.path.join(os.getcwd(), "HackSphere_Starter_Kit", args.input)
+        ]:
+            if os.path.exists(candidate):
+                input_path = candidate
+                break
+
+    if not os.path.exists(input_path):
+        print(f"Error: Input file '{args.input}' not found.")
+        sys.exit(1)
+
+    print(f"Reading input from: {input_path}")
+    input_df = pd.read_csv(input_path)
+    preds = predict(input_df)
+
+    out_df = pd.DataFrame({
+        "timestamp": input_df["timestamp"],
+        "target_demand_kw": np.round(preds, 2)
+    })
+    out_df.to_csv(args.output, index=False)
+    print(f"Saved {len(out_df)} predictions to: {args.output}")
+    print(f"First 5 predictions:\n{out_df.head(5)}")

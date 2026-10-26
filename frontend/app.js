@@ -1,5 +1,5 @@
 /**
- * HOUSTATLANTAVEGAS — Energy Forecast Terminal
+ * HOUSTATLANTAVEGAS - Energy Forecast Terminal
  * Core Frontend Analytics Engine
  *
  * Handles:

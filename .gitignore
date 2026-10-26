@@ -58,5 +58,13 @@ catalyst.log
 .DS_Store
 .idea/
 .vscode/
+.evaluator/
+pyrightconfig.json
 *.swp
 *.swo
+
+# Internal progress tracking & local test outputs
+PROGRESS.md
+tests/
+predictions*.csv
+test_out*.csv

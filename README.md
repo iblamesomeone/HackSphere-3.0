@@ -102,18 +102,20 @@ Open your browser at: **`http://localhost:8000`**
 
 ## 4. Verification & Testing
 
-### Run All Unit and Integration Tests
-```bash
-python3 -m unittest discover -s tests
-```
-*Result: 13 tests passed (covers switching boundaries, overload limits, CSV validation, and API contracts).*
-
-### Run the Official Evaluator Contract Check
+### Official Evaluator Contract Check (`test_eval.py`)
+Run the official pre-submission self-test script:
 ```bash
 cd HackSphere_Starter_Kit
 python3 test_eval.py
 ```
-*Result: `SUCCESS` (Generates exactly 1,000 real QuickML predictions on `sample_test_input.csv` preserving timestamps).*
+*Result: `SUCCESS` (Validates `predict(input_df)` contract on 1,000 real rows against QuickML).*
+
+### Automated Prediction CLI (`predict.py`)
+Run batch predictions from the command line:
+```bash
+python3 predict.py --input HackSphere_Starter_Kit/sample_test_input.csv --output predictions.csv
+```
+*Outputs formatted CSV predictions with columns `timestamp,target_demand_kw`.*
 
 ---
 
