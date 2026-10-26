@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initManualTable();
   initSampleLoader();
   initAuditLogs();
+  loadInitialSampleData();
 });
 
 /* ==========================================================================
@@ -269,6 +270,24 @@ function initSampleLoader() {
       alert(`Sample loader error: ${err.message}`);
     }
   });
+}
+
+async function loadInitialSampleData() {
+  try {
+    const res = await fetch(`${API_BASE}/api/sample`);
+    if (!res.ok) return;
+    const json = await res.json();
+    if (json.data && json.data.length > 0) {
+      logToConsole("Auto-loaded initial 24-hour sample baseline telemetry.");
+      await executeForecastRequest("/api/forecast/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: json.data, initial_soc_pct: 85.0 })
+      });
+    }
+  } catch (err) {
+    logToConsole(`Initial sample auto-load bypassed: ${err.message}`, "warn");
+  }
 }
 
 /* ==========================================================================

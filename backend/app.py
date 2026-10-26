@@ -49,8 +49,19 @@ def health_check():
 @app.route("/api/sample", methods=["GET"])
 def get_sample_telemetry():
     """Returns 24 hours of sample input telemetry from sample_test_input.csv."""
-    sample_path = os.path.join(os.path.dirname(__file__), "..", "HackSphere_Starter_Kit", "sample_test_input.csv")
-    if not os.path.exists(sample_path):
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "..", "HackSphere_Starter_Kit", "sample_test_input.csv"),
+        os.path.join(os.path.dirname(__file__), "HackSphere_Starter_Kit", "sample_test_input.csv"),
+        os.path.join(os.getcwd(), "HackSphere_Starter_Kit", "sample_test_input.csv"),
+        os.path.join(os.getcwd(), "sample_test_input.csv"),
+    ]
+    sample_path = None
+    for p in candidates:
+        if os.path.exists(p):
+            sample_path = p
+            break
+
+    if not sample_path:
         return jsonify({"error": "Sample dataset not found on server."}), 404
 
     df = pd.read_csv(sample_path)
